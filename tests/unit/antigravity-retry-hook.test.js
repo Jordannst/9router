@@ -32,8 +32,23 @@ describe("antigravity computeRetryDelay hook (D3)", () => {
     expect(await ag.computeRetryDelay(res(429), 3)).toBe(Math.min(1000 * 2 ** 3, MAX));
   });
 
-  it("503 without retry info → veto (no auto backoff)", async () => {
-    expect(await ag.computeRetryDelay(res(503), 1)).toBe(false);
+  it("503 without retry info → transient backoff", async () => {
+    expect(await ag.computeRetryDelay(res(503), 1)).toBe(2000);
+  });
+
+  it("retries Antigravity agent terminated body even when status is not 429", async () => {
+    const r = res(500, {}, { error: { message: "Agent execution terminated due to error" } });
+    expect(await ag.computeRetryDelay(r, 1)).toBe(2000);
+  });
+
+  it("retries high traffic body", async () => {
+    const r = res(500, {}, { error: { message: "Our servers are experiencing high traffic" } });
+    expect(await ag.computeRetryDelay(r, 2)).toBe(4000);
+  });
+
+  it("does not retry non-transient 400 errors", async () => {
+    const r = res(400, {}, { error: { message: "Invalid request" } });
+    expect(await ag.computeRetryDelay(r, 1)).toBe(false);
   });
 
   it("buildHeaders includes cached session id after transformRequest", () => {
