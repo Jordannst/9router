@@ -51,6 +51,21 @@ describe("antigravity computeRetryDelay hook (D3)", () => {
     expect(await ag.computeRetryDelay(r, 1)).toBe(false);
   });
 
+  it("deduplicates sanitized tool names", () => {
+    const out = ag.transformRequest("claude-opus-4-6-thinking", {
+      request: {
+        contents: [{ role: "user", parts: [{ text: "hi" }] }],
+        tools: [{ functionDeclarations: [
+          { name: "read-file", parameters: { type: "object", properties: {} } },
+          { name: "read file", parameters: { type: "object", properties: {} } },
+          { name: "read-file", parameters: { type: "object", properties: {} } },
+        ] }],
+      },
+    }, true, { projectId: "project-1", connectionId: "conn-1" });
+
+    expect(out.request.tools[0].functionDeclarations.map(fn => fn.name)).toEqual(["read-file", "read_file"]);
+  });
+
   it("buildHeaders includes cached session id after transformRequest", () => {
     ag._lastSessionId = "sess-123";
     const h = ag.buildHeaders({ accessToken: "tok" }, true);
