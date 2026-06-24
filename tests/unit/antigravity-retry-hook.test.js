@@ -56,14 +56,14 @@ describe("antigravity computeRetryDelay hook (D3)", () => {
       request: {
         contents: [{ role: "user", parts: [{ text: "hi" }] }],
         tools: [{ functionDeclarations: [
-          { name: "read-file", parameters: { type: "object", properties: {} } },
+          { name: "read/file", parameters: { type: "object", properties: {} } },
           { name: "read file", parameters: { type: "object", properties: {} } },
-          { name: "read-file", parameters: { type: "object", properties: {} } },
+          { name: "read/file", parameters: { type: "object", properties: {} } },
         ] }],
       },
     }, true, { projectId: "project-1", connectionId: "conn-1" });
 
-    expect(out.request.tools[0].functionDeclarations.map(fn => fn.name)).toEqual(["read-file", "read_file"]);
+    expect(out.request.tools[0].functionDeclarations.map(fn => fn.name)).toEqual(["read_file"]);
   });
 
   it("buildHeaders includes cached session id after transformRequest", () => {
