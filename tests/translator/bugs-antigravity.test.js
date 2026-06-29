@@ -55,7 +55,7 @@ describe("Antigravity → OpenAI", () => {
 });
 
 describe("Antigravity executor", () => {
-  it("strips optional from nested tool schemas", () => {
+  it("strips optional and deprecated from nested tool schemas", () => {
     const out = new AntigravityExecutor().transformRequest("gemini-2.5-pro", {
       request: {
         contents: [{ role: "user", parts: [{ text: "hi" }] }],
@@ -70,6 +70,17 @@ describe("Antigravity executor", () => {
                   type: "string",
                   description: "Search query",
                   optional: true,
+                  deprecated: true,
+                },
+                nested: {
+                  type: "object",
+                  deprecated: true,
+                  properties: {
+                    value: {
+                      type: "string",
+                      deprecated: true,
+                    },
+                  },
                 },
               },
             },
@@ -78,7 +89,11 @@ describe("Antigravity executor", () => {
       },
     }, true, { projectId: "project-1", connectionId: "conn-1" });
 
-    const query = out.request.tools[0].functionDeclarations[0].parameters.properties.query;
+    const parameters = out.request.tools[0].functionDeclarations[0].parameters;
+    const query = parameters.properties.query;
+    const nested = parameters.properties.nested;
     expect(query).toEqual({ type: "string", description: "Search query" });
+    expect(nested).toEqual({ type: "object", properties: { value: { type: "string" } } });
+    expect(JSON.stringify(parameters)).not.toContain("deprecated");
   });
 });
